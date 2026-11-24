@@ -1,4 +1,4 @@
-// วาง URL ของ Apps Script Web App ตรงนี้ (ดูวิธีใน apps-script.gs)
+
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4aEmGvRHuifqZjsPamo3Uk2BC9uOs-apZ1yT5unF_Rh8RfVHEwmR27yxHX1rrfug/exec";
 
 const PRODUCTS = [
