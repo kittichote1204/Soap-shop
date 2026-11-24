@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สบู่ธรรมชาติ | สั่งซื้อออนไลน์</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>สบู่ธรรมชาติ</h1>
+  <p>อ่อนโยน หอมสะอาด สั่งง่ายส่งไว</p>
+</header>
+<div class="container">
+  <div class="grid" id="products"></div>
+
+  <form id="orderForm">
+    <h2>กรอกข้อมูลสั่งซื้อ</h2>
+    <label>ชื่อ-นามสกุล</label><input name="name" required>
+    <label>เบอร์โทร</label><input name="phone" required pattern="[0-9]{9,10}" inputmode="numeric">
+    <label>ที่อยู่จัดส่ง</label><textarea name="address" rows="3" required></textarea>
+    <div class="total">รวมทั้งหมด: <span id="total">0</span> บาท</div>
+    <button type="submit">สั่งซื้อ</button>
+    <div id="msg"></div>
+  </form>
+  <p class="noprint"><a href="pick.html">ใบหยิบสินค้า</a> | <a href="label.html">ใบปะหน้าพัสดุ</a></p>
+</div>
+<script src="config.js"></script>
+<script>
+const box = document.getElementById("products");
+PRODUCTS.forEach(p => {
+  box.insertAdjacentHTML("beforeend", `
+  <div class="card">
+    <img src="${p.image}" alt="${p.name}">
+    <div class="body">
+      <small>${p.sku}</small>
+      <h3>${p.name}</h3>
+      <div>${p.desc}</div>
+      <div class="price">${p.price} บาท</div>
+      <div class="qty">จำนวน <input type="number" min="0" value="0" data-sku="${p.sku}"></div>
+    </div>
+  </div>`);
+});
+const calc = () => {
+  let t = 0;
+  document.querySelectorAll("[data-sku]").forEach(i => {
+    const p = PRODUCTS.find(x => x.sku === i.dataset.sku);
+    t += p.price * (parseInt(i.value) || 0);
+  });
+  document.getElementById("total").textContent = t;
+  return t;
+};
+document.addEventListener("input", calc);
+
+document.getElementById("orderForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = document.getElementById("msg");
+  const items = [];
+  document.querySelectorAll("[data-sku]").forEach(i => {
+    const q = parseInt(i.value) || 0;
+    if (q > 0) { const p = PRODUCTS.find(x => x.sku === i.dataset.sku); items.push({ sku: p.sku, name: p.name, qty: q, price: p.price }); }
+  });
+  if (!items.length) { msg.textContent = "กรุณาเลือกสินค้าอย่างน้อย 1 ชิ้น"; return; }
+  const f = new FormData(e.target);
+  const payload = {
+    orderId: "ORD" + Date.now().toString().slice(-8),
+    name: f.get("name"), phone: f.get("phone"), address: f.get("address"),
+    items, total: calc()
+  };
+  msg.textContent = "กำลังส่งคำสั่งซื้อ...";
+  try {
+    await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(payload) });
+    msg.textContent = "สั่งซื้อสำเร็จ! เลขออเดอร์ " + payload.orderId;
+    e.target.reset(); document.querySelectorAll("[data-sku]").forEach(i => i.value = 0); calc();
+  } catch (err) { msg.textContent = "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง"; }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ใบปะหน้าพัสดุ</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <div class="bar noprint"><button onclick="load()">รีเฟรช</button><button onclick="window.print()">พิมพ์</button><a href="pick.html">ไปใบหยิบสินค้า</a></div>
+  <div class="labels" id="labels"></div>
+</div>
+<script src="config.js"></script>
+<script>
+async function load() {
+  const rows = await (await fetch(SCRIPT_URL)).json();
+  const orders = {};
+  rows.forEach(r => (orders[r.orderId] = orders[r.orderId] || { ...r, items: [] }).items.push(r));
+  document.getElementById("labels").innerHTML = Object.values(orders).map(o => `
+    <div class="label">
+      <div>ผู้ส่ง: ${SENDER.name} โทร ${SENDER.phone}<br>${SENDER.address}</div>
+      <hr>
+      <div class="to">ผู้รับ: ${o.customer}</div>
+      <div>โทร: ${o.phone}</div>
+      <div>ที่อยู่: ${o.address}</div>
+      <hr>
+      <div>เลขออเดอร์: <b>${o.orderId}</b></div>
+      <div>${o.items.map(i => `${i.sku} ${i.name} x${i.qty}`).join("<br>")}</div>
+      <div>ยอดรวม: <b>${o.total}</b> บาท</div>
+    </div>`).join("");
+}
+load();
+</script>
+</body>
+</html>

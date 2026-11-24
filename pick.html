@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ใบหยิบสินค้า</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h1>ใบหยิบสินค้า (Picking List)</h1>
+  <div class="bar noprint"><button onclick="load()">รีเฟรช</button><button onclick="window.print()">พิมพ์</button><a href="label.html">ไปใบปะหน้า</a></div>
+  <h3>สรุปรวมที่ต้องหยิบ</h3>
+  <table id="sum"></table>
+  <h3>แยกตามออเดอร์</h3>
+  <div id="orders"></div>
+</div>
+<script src="config.js"></script>
+<script>
+async function load() {
+  const rows = await (await fetch(SCRIPT_URL)).json();
+  const orders = {}, sum = {};
+  rows.forEach(r => {
+    (orders[r.orderId] = orders[r.orderId] || { ...r, items: [] }).items.push(r);
+    sum[r.sku] = sum[r.sku] || { name: r.name, qty: 0 };
+    sum[r.sku].qty += Number(r.qty);
+  });
+  document.getElementById("sum").innerHTML = "<tr><th>รูป</th><th>SKU</th><th>สินค้า</th><th>จำนวนรวม</th></tr>" +
+    Object.entries(sum).map(([k, v]) => {
+      const p = PRODUCTS.find(x => x.sku === k);
+      return `<tr><td>${p ? `<img src="${p.image}" width="50">` : ""}</td><td>${k}</td><td>${v.name}</td><td>${v.qty}</td></tr>`;
+    }).join("");
+  document.getElementById("orders").innerHTML = Object.values(orders).map(o => `
+    <div class="order">
+      <b>${o.orderId}</b> — ${o.customer}
+      <table><tr><th>✔</th><th>SKU</th><th>สินค้า</th><th>จำนวน</th></tr>
+      ${o.items.map(i => `<tr><td>☐</td><td>${i.sku}</td><td>${i.name}</td><td>${i.qty}</td></tr>`).join("")}
+      </table></div>`).join("");
+}
+load();
+</script>
+</body>
+</html>
